@@ -1,0 +1,11 @@
+
+{
+  "name": "Simple F1 Test Circuit",
+  "segments": [
+    { "type": "straight", "length": 300 },
+    { "type": "turn", "radius": 80, "angle": 90 },
+    { "type": "straight", "length": 500 },
+    { "type": "turn", "radius": 50, "angle": 180 },
+    { "type": "straight", "length": 400 }
+  ]
+}
