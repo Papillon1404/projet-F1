@@ -3,11 +3,12 @@ import math
 
 class LapSimulator:
     
-    def __init__(self,car,circuit,mu=1.7,g=9.81,dt_target=0.02):
+    def __init__(self,car,circuit,mu=1.7,g=9.81,dx_ref=1.0,dt_target=0.02):
         self.car = car
         self.circuit = circuit
         self.mu = mu
         self.g = g
+        self.dx_ref = dx_ref
         self.dt_target = dt_target  # pas temporel cible
 
         self.x =[]
@@ -22,56 +23,54 @@ class LapSimulator:
         for seg in self.circuit.segments :
             
             if seg["type"] == "Straight":
-                n = int(seg["length"] / self.dx)
+                n = int(seg["length"] / self.dx_ref)
                 for _ in range(n):
                     self.x.append(pos)
                     self.v_max.append(np.inf)
-                    pos+=self.dx
+                    pos+=self.dx_ref
 
             elif seg["type"] == "turn":
                 arc = math.radians(seg["angle"]) * seg["radius"]
-                n = int(arc /self.dx)
+                n = int(arc /self.dx_ref)
                 vmax_turn = math.sqrt(self.mu * self.g * seg["radius"])
 
                 for _ in range(n):
                     self.x.append(pos)
                     self.v_max.append(vmax_turn)
-                    pos += self.dx
+                    pos += self.dx_ref
 
         self.x = np.array(self.x)
         self.v_max = np.array(self.v_max)
 
     def simulate(self):
-        x_sim = [0.0]           # position curviligne
-        v_sim = [1.0]           # vitesse initiale 1 m/s pour éviter dt énorme
-        dt_list = [0.0]         # temps cumulé initial
-        a_list = []             # accélération
-
-        
         v = np.zeros(len(self.x))
-
-        #Passe avant : accélération
-        for i in range(1,len(v)):
+        dt_list = np.zeros(len(self.x))
+    
+        # Passe avant : accélération
+        for i in range(1, len(v)):
             a = self.car.acceleration(v[i-1])
             dx = max(v[i-1] * self.dt_target, 0.01)
-            v[i] = np.sqrt(max(0,v[i-1]**2 + 2 * a * dx))
-            v[i] = min(v[i], self.v_max[i])
-        
+            v_new = np.sqrt(max(0, v[i-1]**2 + 2 * a * dx))
+            v[i] = min(v_new, self.v_max[i])
+            dt_list[i] = dx / max(v[i], 1e-2)
 
-        #Passe arriere : freinage
+        # Passe arrière : freinage
         for i in reversed(range(len(v)-1)):
-            dx = max(v[i-1] * self.dt_target, 0.01)
-            v_brake = np.sqrt(v[i+1]**2 + 2 * self.mu * self.g * self.dx)
+            dx = max(v[i] * self.dt_target, 0.01)
+            v_brake = np.sqrt(v[i+1]**2 + 2 * self.mu * self.g * dx)
             v[i] = min(v[i], v_brake)
+            dt_list[i] = dx / max(v[i], 1e-2)
 
-        dt = self.dx / np.maximum(v, 1e-3)
-        total_time = np.sum(dt)
+        t = np.cumsum(dt_list)
+        total_time = t[-1]
 
+        # Accélération
+        dv = np.diff(v)
+        dx_arr = np.diff(self.x)
+        dx_arr = np.where(dx_arr == 0, 1e-6, dx_arr)
+        a = np.zeros_like(v)
+        a[:-1] = dv / dx_arr
+        a[-1] = a[-2]
 
-        time_per_segment = dx / np.maximum(v, 1e-3)
-        t = np.cumsum(np.concatenate([[0], time_per_segment]))
-        a = np.gradient(v, time_per_segment)
+        return t, self.x, v, total_time, dt_list, a
 
-        return t, self.x, v, total_time, time_per_segment, a
-    
-    
