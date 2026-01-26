@@ -22,6 +22,7 @@ v_max = np.max(v)
 print(f"Min speed: {v_min*3.6:.1f} km/h")
 print(f"Max speed: {v_max*3.6:.1f} km/h")
 print(f"Lap time: {lap_time:.2f} s")
+print(f"Time lost in slow zones: {np.sum(time_per_segment[v < 50]):.2f} s")
 
 # plot
 plt.figure(figsize=(10,4))
