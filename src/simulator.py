@@ -45,17 +45,19 @@ class LapSimulator:
         #Passe avant : accélération
         for i in range(1,len(v)):
             a = self.car.acceleration(v[i-1])
-            v[i] = math.sqrt(max(0,v[i-1]**2 + 2 * a * self.dx))
+            v[i] = np.sqrt(max(0,v[i-1]**2 + 2 * a * self.dx))
             v[i] = min(v[i], self.v_max[i])
 
         #Passe arriere : freinage
         for i in reversed(range(len(v)-1)):
-            v_brake = math.sqrt(v[i+1]**2 + 2 * self.mu * self.g * self.dx)
+            v_brake = np.sqrt(v[i+1]**2 + 2 * self.mu * self.g * self.dx)
             v[i] = min(v[i], v_brake)
 
         dt = self.dx / np.maximum(v, 1e-3)
         total_time = np.sum(dt)
 
         time_per_segment = self.dx / np.maximum(v, 1e-3)
-        
-        return self.x, v, total_time, time_per_segment
+        a = np.gradient(v, self.dx)
+        return self.x, v, total_time, time_per_segment, a
+    
+    

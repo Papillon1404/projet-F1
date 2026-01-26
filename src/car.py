@@ -19,13 +19,23 @@ class Car :
         return 0.5 * self.rho * self.cd * self.area * v**2
     
     def engine_force(self, v):
-        v = max(v,1.0) # éviter division par zéro
-        return self.power / v
+        F_max = 15_000  # N (ordre de grandeur)
+        v = max(v, 1.0)
+        F_power = self.power / v
+        return min(F_max, F_power)
 
     def acceleration(self,v): 
         F_motor = self.engine_force(v)
         F_drag = self.drag_force(v)
 
         return (F_motor - F_drag)/self.mass
+
+
+    def max_braking(self, v, mu=1.7, g=9.81):
+        return mu * g * self.grip_factor(v)
+    
+    def grip_factor(self, v):
+        return 1.0 + 0.002 * v**2
+
     
 
