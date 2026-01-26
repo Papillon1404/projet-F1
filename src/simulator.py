@@ -56,4 +56,6 @@ class LapSimulator:
         dt = self.dx / np.maximum(v, 1e-3)
         total_time = np.sum(dt)
 
-        return self.x, v, total_time
+        time_per_segment = self.dx / np.maximum(v, 1e-3)
+        
+        return self.x, v, total_time, time_per_segment

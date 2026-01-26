@@ -1,11 +1,19 @@
-
 {
-  "name": "Simple F1 Test Circuit",
+  "name": "F1 Technical Circuit",
   "segments": [
-    { "type": "straight", "length": 300 },
-    { "type": "turn", "radius": 80, "angle": 90 },
-    { "type": "straight", "length": 500 },
-    { "type": "turn", "radius": 50, "angle": 180 },
-    { "type": "straight", "length": 400 }
+    { "type": "straight", "length": 600 },
+
+    { "type": "turn", "radius": 120, "angle": 45 },
+    { "type": "turn", "radius": 80,  "angle": 60 },
+
+    { "type": "straight", "length": 400 },
+
+    { "type": "turn", "radius": 40,  "angle": 90 },
+
+    { "type": "straight", "length": 800 },
+
+    { "type": "turn", "radius": 150, "angle": 180 },
+
+    { "type": "straight", "length": 500 }
   ]
 }
