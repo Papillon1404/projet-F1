@@ -1,10 +1,10 @@
-from car import Car
-from circuit import Circuit
-from simulator import LapSimulator
+from src.car import Car
+from src.circuit import Circuit
+from src.simulator import LapSimulator
 import matplotlib.pyplot as plt
 
 car = Car()
-circuit = Circuit("/projet-F1/data/circuit.json")
+circuit = Circuit("data/circuit.json")
 
 
 sim = LapSimulator(car, circuit)
