@@ -50,7 +50,7 @@ ax_speed.set_ylabel("Speed (km/h)")
 
 # accélération
 line_a, = ax_acc.plot([], [], color="red")
-ax_acc.set_xlim(0, 10000)
+ax_acc.set_xlim(0, t[-1])
 ax_acc.set_ylim(a.min()*1.2, a.max()*1.2)
 ax_acc.set_ylabel("Acceleration (m/s²)")
 

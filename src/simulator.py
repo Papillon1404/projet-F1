@@ -44,11 +44,7 @@ class LapSimulator:
         self.v_max = np.array(self.v_max)
 
     def simulate(self):
-        x_sim = [0.0]           # position curviligne
-        v_sim = [1.0]           # vitesse initiale 1 m/s pour éviter dt énorme
-        dt_list = [0.0]         # temps cumulé initial
-        a_list = []             # accélération
-
+ 
         
         v = np.zeros(len(self.x))
 
