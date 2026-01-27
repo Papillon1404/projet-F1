@@ -4,8 +4,8 @@ class Car :
 
     def __init__(self,
         mass=800,
-        power=750_000,
-        cd=0.9,
+        power=1000_000,
+        cd=0.0,
         area=1.5,
         rho=1.225
     ):

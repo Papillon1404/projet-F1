@@ -44,30 +44,33 @@ class LapSimulator:
         self.v_max = np.array(self.v_max)
 
     def simulate(self):
- 
-        
-        v = np.zeros(len(self.x))
 
-        #Passe avant : accélération
-        for i in range(1,len(v)):
+        n = len(self.x)
+        v = np.zeros(n)
+        v[0] = 1.0  # vitesse minimale réaliste
+
+        # Passe avant : accélération
+        for i in range(1, n):
             a = self.car.acceleration(v[i-1])
-            v[i] = np.sqrt(max(0,v[i-1]**2 + 2 * a * self.dx))
-            v[i] = min(v[i], self.v_max[i])
-        
+            v_new = np.sqrt(max(0, v[i-1]**2 + 2 * a * self.dx))
+            v[i] = min(v_new, self.v_max[i])
 
-        #Passe arriere : freinage
-        for i in reversed(range(len(v)-1)):
+        # Passe arrière : freinage
+        for i in reversed(range(n-1)):
             v_brake = np.sqrt(v[i+1]**2 + 2 * self.mu * self.g * self.dx)
             v[i] = min(v[i], v_brake)
 
-        dt = self.dx / np.maximum(v, 1.0) # vitesse min : 1m/s
-        total_time = np.sum(dt)
+        # Temps
+        dt = self.dx / np.maximum(v, 1.0)   # vitesse minimale = 1 m/s
+        t = np.cumsum(dt)
+        total_time = t[-1]
 
-        time_per_segment = self.dx / np.maximum(v, 1.0)
-        a = np.gradient(v, self.dx)
-        t = np.cumsum(np.concatenate([[0], time_per_segment]))
-       
+        # Accélération
+        a = np.zeros_like(v)
+        a[1:] = (v[1:] - v[:-1]) / dt[1:]
+        a[0] = a[1]
 
-        return t, self.x, v, total_time, time_per_segment, a
+        return t, self.x, v, total_time, dt, a
+
     
     
