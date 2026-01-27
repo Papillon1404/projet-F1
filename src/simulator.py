@@ -67,7 +67,7 @@ class LapSimulator:
         dt = self.dx / np.maximum(v, 1.0) # vitesse min : 1m/s
         total_time = np.sum(dt)
 
-        time_per_segment = self.dx / np.maximum(v, 1e-3)
+        time_per_segment = self.dx / np.maximum(v, 1.0)
         a = np.gradient(v, self.dx)
         t = np.cumsum(np.concatenate([[0], time_per_segment]))
        

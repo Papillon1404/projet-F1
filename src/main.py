@@ -44,7 +44,7 @@ fig, (ax_speed, ax_acc, ax_track) = plt.subplots(
 
 # vitesse
 line_v, = ax_speed.plot([], [], lw=2)
-ax_speed.set_xlim(0, 10000)
+ax_speed.set_xlim(0, t[-1])
 ax_speed.set_ylim(0, v.max()*3.6*1.1)
 ax_speed.set_ylabel("Speed (km/h)")
 
