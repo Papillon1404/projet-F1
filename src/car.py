@@ -55,20 +55,18 @@ class Car :
 
     # évolution de la batterie
 
-    def charge_battery(self, v, ds=1.0):
+    def charge_battery(self, v, dv, ds=1.0):
         # dt = distance / vitesse
-        v = max(v, 1.0)
-        dt = ds / v
-
-        P = self.P_MGU_K(v)
-    
+        dt = ds / max(v, 1.0)
+        
+        P = self.m * v * abs(dv)
+        
         dE = + P * self.rendement_charge_decharge * dt/3600.0 # conversion en Wh
         self.E_battery = min(self.capacity, max(0, self.E_battery + dE))
 
     def decharge_battery(self, v, ds=1.0):
         # dt = distance / vitesse
-        v = max(v, 1.0)
-        dt = ds / v
+        dt = ds / max(v, 1.0)
 
         P = self.P_MGU_K(v)
 
@@ -80,12 +78,14 @@ class Car :
     def P_MGU_K(self,v):
         w = v/(self.rayon * self.rapports[self.vitesse-1]) # on divise par le rapport de la boite de vitesse
         
-        if w <= self.w_pmax :
-            return self.power_elec
+        if self.E_battery > 0 :
+            if w <= self.w_pmax :
+                return self.power_elec
         
+            else :
+                return self.power_elec * self.w_pmax/w   # courbe inverse de w
         else :
-            return self.power_elec * self.w_pmax/w   # courbe inverse de w
-        
+            return 0
 
     # puissance thermique
     def P_ICE(self,v): 
@@ -111,10 +111,9 @@ class Car :
     
     def engine_force(self, v):
         power = self.P_ICE(v) + self.P_MGU_K(v)
-        F_max = 15_000  # N (ordre de grandeur)
         v = max(v, 1.0)
         F_power = power / v
-        return min(F_max, F_power)
+        return F_power
 
     def acceleration(self,v): 
         F_motor = self.engine_force(v)

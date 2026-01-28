@@ -46,35 +46,38 @@ class LapSimulator:
     def simulate(self):
 
         n = len(self.x)
+        v_cible = self.v_max
         v = np.zeros(n)
         v[0] = 1.0  # vitesse minimale réaliste
         courbe_batterie = n*[self.car.E_battery]
 
-        # Passe avant : accélération
-        for i in range(1, n):
-            a = self.car.acceleration(v[i-1])
-            v_new = np.sqrt(max(0, v[i-1]**2 + 2 * a * self.dx))
-            v[i] = min(v_new, self.v_max[i])
-            
-            # mise a jour du gear ratio et de la charge de la batterie
-            self.car.vitesse = self.car.boite_vitesse(v[i])
-            if v[i] < self.v_max[i] :
-                self.car.decharge_battery(v[i], ds = 1.0)
-            
-            courbe_batterie[i] = self.car.E_battery
 
-
+        # modèle accausal pour obtenir un profil de vitesse cible
         # Passe arrière : freinage
         for i in reversed(range(n-1)):
             v_brake = np.sqrt(v[i+1]**2 + 2 * self.mu * self.g * self.dx)
-            v[i] = min(v[i], v_brake)
+            v_cible[i] = min(v[i], v_brake)
 
-            # mise a jour du gear ratio et de la charge de la batterie
-            self.car.vitesse = self.car.boite_vitesse(v[i])
-            if v[i] > v_brake :
-                self.car.charge_battery(v[i], ds = 1.0)
-            
-            courbe_batterie[i] = self.car.E_battery
+        # 2e résolution prenant en compte puissance moteur
+        for i in range(n-1):
+            dv = v_cible[i+1]-v[i]
+
+            if dv >= 0 :  # on ne va pas aussi vite que l'on voudrait
+                a = self.car.acceleration(v)
+                v[i+1] = np.sqrt(max(0, v[i]**2 + 2 * a * self.dx))
+                
+                # on met à jour les caractéristiques de la voiture
+                self.car.vitesse = self.car.boite_vitesse(v)
+                self.car.decharge_battery(v,ds=1.0)
+                courbe_batterie[i] = self.car.E_battery
+
+            else : # on souhaite ralentir
+                v[i+1] = v[i] + dv # on suppose que l'on a la capacité de ralentir grâce à la passe arrière
+
+                self.car.vitesse = self.car.boite_vitesse(v)
+                self.car.charge_battery(v,dv,ds=1.0) # dans la fonction, dv peut etre positif et negatif, la valeur absolue l'ecrase
+                courbe_batterie[i] = self.car.E_battery
+
 
 
         # Temps
