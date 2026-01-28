@@ -16,7 +16,8 @@ car = Car()
 circuit = Circuit(DATA / "circuit.json")
 
 sim = LapSimulator(car, circuit)
-t, x, v, lap_time, time_per_segment ,a , courbe_batterie = sim.simulate()
+
+t, x, v, v_cible, lap_time, time_per_segment ,a , courbe_batterie = sim.simulate()
 v_min = np.min(v)
 v_max = np.max(v)
 
@@ -44,6 +45,7 @@ fig, (ax_speed, ax_acc,ax_batt, ax_track) = plt.subplots(
 
 # vitesse
 line_v, = ax_speed.plot([], [], lw = 2)
+line_v_cible, = ax_speed.plot([], [], linestyle = "--",color="orange")
 ax_speed.set_xlim(0, t[-1])
 ax_speed.set_ylim(0, v.max()*3.6*1.1)
 ax_speed.set_ylabel("Speed (km/h)")
@@ -51,7 +53,7 @@ ax_speed.set_ylabel("Speed (km/h)")
 # accélération
 line_a, = ax_acc.plot([], [], color = "red")
 ax_acc.set_xlim(0, t[-1])
-ax_acc.set_ylim(a.min()*1.2, a.max()*1.2)
+ax_acc.set_ylim(-25, 25)
 ax_acc.set_ylabel("Acceleration (m/s²)")
 
 # batterie
@@ -70,18 +72,18 @@ ax_track.set_title("Circuit Layout")
 
 def update(i):
     line_v.set_data(t[:i], v[:i]*3.6)
+    line_v_cible.set_data(t[:i], v_cible[:i]*3.6)
     line_a.set_data(t[:i], a[:i])
     line_b.set_data(t[:i], courbe_batterie[:i])
 
     car_dot.set_data([car_X[i]], [car_Y[i]])
 
 
-    return line_v, line_a, car_dot, line_b
+    return line_v, line_v_cible, line_a, car_dot, line_b
 
 
 
 ### animation ######################################################################################
-from matplotlib.animation import FuncAnimation
 
 ani = FuncAnimation(
     fig,
@@ -108,5 +110,3 @@ print(f"Time lost in slow zones: {np.sum(time_per_segment[v < 50]):.2f} s")
 
 ##### controle de bug #############################################################################
 
-print(f":{a}")
-print(f":{courbe_batterie}")

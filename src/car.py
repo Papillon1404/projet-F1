@@ -59,7 +59,7 @@ class Car :
         # dt = distance / vitesse
         dt = ds / max(v, 1.0)
         
-        P = self.m * v * abs(dv)
+        P = self.mass * v * abs(dv)
         
         dE = + P * self.rendement_charge_decharge * dt/3600.0 # conversion en Wh
         self.E_battery = min(self.capacity, max(0, self.E_battery + dE))

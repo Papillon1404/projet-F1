@@ -27,7 +27,7 @@ class LapSimulator:
                 n = int(seg["length"] / self.dx)
                 for _ in range(n):
                     self.x.append(pos)
-                    self.v_max.append(np.inf)
+                    self.v_max.append(304.0/3.6)   # vitesse max de 304 km/h obtenue après simulation
                     pos+=self.dx
 
             elif seg["type"] == "turn":
@@ -48,34 +48,34 @@ class LapSimulator:
         n = len(self.x)
         v_cible = self.v_max
         v = np.zeros(n)
-        v[0] = 1.0  # vitesse minimale réaliste
+        v[0] = 0.0  
         courbe_batterie = n*[self.car.E_battery]
 
 
         # modèle accausal pour obtenir un profil de vitesse cible
         # Passe arrière : freinage
         for i in reversed(range(n-1)):
-            v_brake = np.sqrt(v[i+1]**2 + 2 * self.mu * self.g * self.dx)
-            v_cible[i] = min(v[i], v_brake)
+            v_brake = np.sqrt(self.v_max[i+1]**2 + 2 * self.mu * self.g * self.dx)
+            v_cible[i] = min(self.v_max[i], v_brake)
 
         # 2e résolution prenant en compte puissance moteur
         for i in range(n-1):
             dv = v_cible[i+1]-v[i]
 
             if dv >= 0 :  # on ne va pas aussi vite que l'on voudrait
-                a = self.car.acceleration(v)
+                a = self.car.acceleration(v[i])
                 v[i+1] = np.sqrt(max(0, v[i]**2 + 2 * a * self.dx))
                 
                 # on met à jour les caractéristiques de la voiture
-                self.car.vitesse = self.car.boite_vitesse(v)
-                self.car.decharge_battery(v,ds=1.0)
+                self.car.vitesse = self.car.boite_vitesse(v[i])
+                self.car.decharge_battery(v[i],ds=1.0)
                 courbe_batterie[i] = self.car.E_battery
 
             else : # on souhaite ralentir
                 v[i+1] = v[i] + dv # on suppose que l'on a la capacité de ralentir grâce à la passe arrière
 
-                self.car.vitesse = self.car.boite_vitesse(v)
-                self.car.charge_battery(v,dv,ds=1.0) # dans la fonction, dv peut etre positif et negatif, la valeur absolue l'ecrase
+                self.car.vitesse = self.car.boite_vitesse(v[i])
+                self.car.charge_battery(v[i],dv,ds=1.0) # dans la fonction, dv peut etre positif et negatif, la valeur absolue l'ecrase
                 courbe_batterie[i] = self.car.E_battery
 
 
@@ -90,7 +90,7 @@ class LapSimulator:
         a[1:] = (v[1:] - v[:-1]) / dt[1:]
         a[0] = a[1]
 
-        return t, self.x, v, total_time, dt, a, courbe_batterie
+        return t, self.x, v, v_cible, total_time, dt, a, courbe_batterie
 
     
     
