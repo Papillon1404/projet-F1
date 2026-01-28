@@ -52,14 +52,14 @@ class Car :
 
 
     # évolution de la batterie
-    def charge_decharge_battery(self ,brake = bool , acc = bool, v, ds = 1.0):
+    def charge_decharge_battery(self ,v, brake = bool , acc = bool, ds = 1.0):
         
         dt = v * ds
         
-        if brake and E_battery <= self.capacity:
+        if brake : # and E_battery <= self.capacity:
             E_battery += self.P_MGU_K(v) * self.rendement_charge_decharge * dt
         
-        elif acc and E_battery >= 0:
+        elif acc : # and E_battery >= 0:
             E_battery += -self.P_MGU_K(v) * self.rendement_charge_decharge * dt
 
     # puissance electrique
