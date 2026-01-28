@@ -17,7 +17,7 @@ circuit = Circuit(DATA / "circuit.json")
 
 sim = LapSimulator(car, circuit)
 
-t, x, v, v_cible, lap_time, time_per_segment ,a , courbe_batterie = sim.simulate()
+t, x, v, v_cible, lap_time, time_per_segment ,a , courbe_batterie, vitesses_au_cours_du_temps, rpm = sim.simulate()
 v_min = np.min(v)
 v_max = np.max(v)
 
@@ -38,8 +38,8 @@ car_Y = interp_Y(x)
 
 
 ### plot ###########################################################################################
-fig, (ax_speed, ax_acc,ax_batt, ax_track) = plt.subplots(
-    4, 1, figsize=(10, 8), gridspec_kw={"height_ratios": [2, 2, 2, 3]}
+fig, (ax_speed, ax_acc,ax_batt, ax_gear, ax_track) = plt.subplots(
+    5, 1, figsize=(10, 8), gridspec_kw={"height_ratios": [2, 2, 2, 2, 3]}
 )
 
 
@@ -62,6 +62,20 @@ ax_batt.set_xlim(0, t[-1])
 ax_batt.set_ylim(min(courbe_batterie) - 0.2 * max(courbe_batterie), max(courbe_batterie)*1.2)
 ax_batt.set_ylabel("capacité de la batterie (Wh)")
 
+# boite de vitesse
+line_rapp, = ax_gear.plot([], [], color = "black")
+ax_gear.set_xlim(0, t[-1])
+ax_gear.set_ylim(0,9)
+ax_gear.set_ylabel("vitesse")
+
+ax_gear2 = ax_gear.twinx()
+line_rpm, = ax_gear2.plot([], [], color = "red")
+ax_gear2.set_xlim(0, t[-1])
+ax_gear2.set_ylim(0, 3_000)
+ax_gear2.set_ylabel("Rpm (tr/min)")
+
+
+
 # circuit
 ax_track.plot(X, Y, color="black")
 car_dot, = ax_track.plot([], [], "ro", markersize=6)
@@ -75,11 +89,13 @@ def update(i):
     line_v_cible.set_data(t[:i], v_cible[:i]*3.6)
     line_a.set_data(t[:i], a[:i])
     line_b.set_data(t[:i], courbe_batterie[:i])
+    line_rapp.set_data(t[:i], vitesses_au_cours_du_temps[:i])
+    line_rpm.set_data(t[:i], rpm[:i])
 
     car_dot.set_data([car_X[i]], [car_Y[i]])
 
 
-    return line_v, line_v_cible, line_a, car_dot, line_b
+    return line_v, line_v_cible, line_a, line_b, line_rapp, line_rpm, car_dot
 
 
 

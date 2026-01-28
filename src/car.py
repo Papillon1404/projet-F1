@@ -13,7 +13,7 @@ class Car :
         tension = 9_000, # en V
         rendement_charge_decharge = 0.9, # 90 à 95%
         rendement_onduleur = 0.95,  # 95 à 98%
-        w_pmax = 1100, # vitesse angulaire à partir de laquelle la puissance moteur elec chute (valeur prise pour englober une partie du plateau de puissance thermique)
+        w_pmax = 150, # vitesse angulaire à partir de laquelle la puissance moteur elec chute (valeur prise pour englober une partie du plateau de puissance thermique)
         rayon = 0.720, #  rayon des pneus pirellis arriere e(n m)
         rapports = [14.0,11,9,7.5,6.3,5.4,4.7,4.1]
     ):
@@ -43,9 +43,9 @@ class Car :
         w = v/(self.rayon * self.rapports[self.vitesse-1]) 
         
         # passe la vitesse supérieur
-        if w >= 1257 and self.vitesse < 8:    # 12_000 tr/min
+        if w >= 210 and self.vitesse < 8:    # 2_000 tr/min
             return self.vitesse + 1 
-        elif w <= 942 and self.vitesse > 1:   # # 9_000 tr/min
+        elif w <= 104 and self.vitesse > 1:   # # 1_000 tr/min
             return self.vitesse - 1
         else : 
             return self.vitesse 

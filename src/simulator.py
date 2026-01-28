@@ -50,6 +50,8 @@ class LapSimulator:
         v = np.zeros(n)
         v[0] = 0.0  
         courbe_batterie = n*[self.car.E_battery]
+        vitesses_au_cours_du_temps = np.zeros(n)
+        rpm = np.zeros(n)
 
 
         # modèle accausal pour obtenir un profil de vitesse cible
@@ -78,6 +80,8 @@ class LapSimulator:
                 self.car.charge_battery(v[i],dv,ds=1.0) # dans la fonction, dv peut etre positif et negatif, la valeur absolue l'ecrase
                 courbe_batterie[i] = self.car.E_battery
 
+            vitesses_au_cours_du_temps[i] = self.car.vitesse
+            rpm[i] = v[i]/(self.car.rayon * self.car.rapports[self.car.vitesse-1])*(30/math.pi)
 
 
         # Temps
@@ -90,7 +94,7 @@ class LapSimulator:
         a[1:] = (v[1:] - v[:-1]) / dt[1:]
         a[0] = a[1]
 
-        return t, self.x, v, v_cible, total_time, dt, a, courbe_batterie
+        return t, self.x, v, v_cible, total_time, dt, a, courbe_batterie, vitesses_au_cours_du_temps, rpm
 
     
     
