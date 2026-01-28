@@ -3,17 +3,18 @@ import math
 
 class LapSimulator:
     
-    def __init__(self,car,circuit,mu=1.7,g=9.81,dx_ref=1.0,dt_target=0.02):
+    def __init__(self,car,circuit,mu=1.7,g=9.81,dx=1.0):
+
         self.car = car
         self.circuit = circuit
         self.mu = mu
         self.g = g
-        self.dx_ref = dx_ref
-        self.dt_target = dt_target  # pas temporel cible
+        self.dx = dx
+
 
         self.x =[]
         self.v_max = []
-
+        
         self._discreticize_circuit()
 
     
@@ -22,55 +23,78 @@ class LapSimulator:
 
         for seg in self.circuit.segments :
             
-            if seg["type"] == "Straight":
-                n = int(seg["length"] / self.dx_ref)
+            if seg["type"] == "straight":
+                n = int(seg["length"] / self.dx)
                 for _ in range(n):
                     self.x.append(pos)
-                    self.v_max.append(np.inf)
-                    pos+=self.dx_ref
+                    self.v_max.append(304.0/3.6)   # vitesse max de 304 km/h obtenue après simulation
+                    pos+=self.dx
 
             elif seg["type"] == "turn":
                 arc = math.radians(seg["angle"]) * seg["radius"]
-                n = int(arc /self.dx_ref)
+                n = int(arc /self.dx)
                 vmax_turn = math.sqrt(self.mu * self.g * seg["radius"])
 
                 for _ in range(n):
                     self.x.append(pos)
                     self.v_max.append(vmax_turn)
-                    pos += self.dx_ref
+                    pos += self.dx
 
         self.x = np.array(self.x)
         self.v_max = np.array(self.v_max)
 
     def simulate(self):
-        v = np.zeros(len(self.x))
-        dt_list = np.zeros(len(self.x))
-    
-        # Passe avant : accélération
-        for i in range(1, len(v)):
-            a = self.car.acceleration(v[i-1])
-            dx = max(v[i-1] * self.dt_target, 0.01)
-            v_new = np.sqrt(max(0, v[i-1]**2 + 2 * a * dx))
-            v[i] = min(v_new, self.v_max[i])
-            dt_list[i] = dx / max(v[i], 1e-2)
 
+        n = len(self.x)
+        v_cible = self.v_max
+        v = np.zeros(n)
+        v[0] = 0.0  
+        courbe_batterie = n*[self.car.E_battery]
+        vitesses_au_cours_du_temps = np.zeros(n)
+        rpm = np.zeros(n)
+
+
+        # modèle accausal pour obtenir un profil de vitesse cible
         # Passe arrière : freinage
-        for i in reversed(range(len(v)-1)):
-            dx = max(v[i] * self.dt_target, 0.01)
-            v_brake = np.sqrt(v[i+1]**2 + 2 * self.mu * self.g * dx)
-            v[i] = min(v[i], v_brake)
-            dt_list[i] = dx / max(v[i], 1e-2)
+        for i in reversed(range(n-1)):
+            v_brake = np.sqrt(self.v_max[i+1]**2 + 2 * self.mu * self.g * self.dx)
+            v_cible[i] = min(self.v_max[i], v_brake)
 
-        t = np.cumsum(dt_list)
+        # 2e résolution prenant en compte puissance moteur
+        for i in range(n-1):
+            dv = v_cible[i+1]-v[i]
+
+            if dv >= 0 :  # on ne va pas aussi vite que l'on voudrait
+                a = self.car.acceleration(v[i])
+                v[i+1] = np.sqrt(max(0, v[i]**2 + 2 * a * self.dx))
+                
+                # on met à jour les caractéristiques de la voiture
+                self.car.vitesse = self.car.boite_vitesse(v[i])
+                self.car.decharge_battery(v[i],ds=1.0)
+                courbe_batterie[i] = self.car.E_battery
+
+            else : # on souhaite ralentir
+                v[i+1] = v[i] + dv # on suppose que l'on a la capacité de ralentir grâce à la passe arrière
+
+                self.car.vitesse = self.car.boite_vitesse(v[i])
+                self.car.charge_battery(v[i],dv,ds=1.0) # dans la fonction, dv peut etre positif et negatif, la valeur absolue l'ecrase
+                courbe_batterie[i] = self.car.E_battery
+
+            vitesses_au_cours_du_temps[i] = self.car.vitesse
+            rpm[i] = v[i]/(self.car.rayon * self.car.rapports[self.car.vitesse-1])*(30/math.pi)
+
+
+        # Temps
+        dt = self.dx / np.maximum(v, 1.0)   # vitesse minimale = 1 m/s
+        t = np.cumsum(dt)
         total_time = t[-1]
 
         # Accélération
-        dv = np.diff(v)
-        dx_arr = np.diff(self.x)
-        dx_arr = np.where(dx_arr == 0, 1e-6, dx_arr)
         a = np.zeros_like(v)
-        a[:-1] = dv / dx_arr
-        a[-1] = a[-2]
+        a[1:] = (v[1:] - v[:-1]) / dt[1:]
+        a[0] = a[1]
 
-        return t, self.x, v, total_time, dt_list, a
+        return t, self.x, v, v_cible, total_time, dt, a, courbe_batterie, vitesses_au_cours_du_temps, rpm
 
+    
+    

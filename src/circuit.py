@@ -23,9 +23,9 @@ class Circuit :
     def total_length(self):
         length = 0.0
         for seg in self.segments : 
-            if seg["type"] == "Straight" :
+            if seg["type"] == "straight" :
                 length += seg["length"]
-            elif seg["type"] == "Turn" :
+            elif seg["type"] == "turn" :
                 length += seg["radius"]*pi*seg["angle"]/180
         
         return length
