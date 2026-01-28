@@ -59,7 +59,7 @@ class Car :
         if brake : # and E_battery <= self.capacity:
             E_battery += self.P_MGU_K(v) * self.rendement_charge_decharge * dt
         
-        elif acc : # and E_battery >= 0:
+        elif acc and E_battery >= 0:
             E_battery += -self.P_MGU_K(v) * self.rendement_charge_decharge * dt
 
     # puissance electrique
