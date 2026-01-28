@@ -80,7 +80,7 @@ ani = FuncAnimation(
     fig,
     update,
     frames=len(x),
-    interval=20,   # ms → ~50 FPS
+    interval=30,   # ms → ~50 FPS
     blit=True
 )
 
@@ -97,4 +97,8 @@ print(f"Max speed: {v_max*3.6:.1f} km/h")
 print(f"Lap time: {lap_time:.2f} s")
 print(f"Time lost in slow zones: {np.sum(time_per_segment[v < 50]):.2f} s")
 
-print(f":{float(t[0])}")
+
+##### controle de bug #############################################################################
+
+#print(f":{t}")
+#print(f":{sim.x}")

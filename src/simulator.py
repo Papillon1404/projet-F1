@@ -23,7 +23,7 @@ class LapSimulator:
 
         for seg in self.circuit.segments :
             
-            if seg["type"] == "Straight":
+            if seg["type"] == "straight":
                 n = int(seg["length"] / self.dx)
                 for _ in range(n):
                     self.x.append(pos)

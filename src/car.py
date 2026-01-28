@@ -5,7 +5,7 @@ class Car :
     def __init__(self,
         mass=800,
         power=1000_000,
-        cd=0.0,
+        cd=0.9,   # dépend de la voiture et du circuit mai autour de 1
         area=1.5,
         rho=1.225
     ):
