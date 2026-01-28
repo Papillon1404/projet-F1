@@ -14,7 +14,7 @@ class LapSimulator:
 
         self.x =[]
         self.v_max = []
-
+        
         self._discreticize_circuit()
 
     
@@ -48,17 +48,34 @@ class LapSimulator:
         n = len(self.x)
         v = np.zeros(n)
         v[0] = 1.0  # vitesse minimale réaliste
+        courbe_batterie = n*[self.car.E_battery]
 
         # Passe avant : accélération
         for i in range(1, n):
             a = self.car.acceleration(v[i-1])
             v_new = np.sqrt(max(0, v[i-1]**2 + 2 * a * self.dx))
             v[i] = min(v_new, self.v_max[i])
+            
+            # mise a jour du gear ratio et de la charge de la batterie
+            self.car.vitesse = self.car.boite_vitesse(v[i])
+            if v[i] < self.v_max[i] :
+                self.car.decharge_battery(v[i], ds = 1.0)
+            
+            courbe_batterie[i] = self.car.E_battery
+
 
         # Passe arrière : freinage
         for i in reversed(range(n-1)):
             v_brake = np.sqrt(v[i+1]**2 + 2 * self.mu * self.g * self.dx)
             v[i] = min(v[i], v_brake)
+
+            # mise a jour du gear ratio et de la charge de la batterie
+            self.car.vitesse = self.car.boite_vitesse(v[i])
+            if v[i] > v_brake :
+                self.car.charge_battery(v[i], ds = 1.0)
+            
+            courbe_batterie[i] = self.car.E_battery
+
 
         # Temps
         dt = self.dx / np.maximum(v, 1.0)   # vitesse minimale = 1 m/s
@@ -70,7 +87,7 @@ class LapSimulator:
         a[1:] = (v[1:] - v[:-1]) / dt[1:]
         a[0] = a[1]
 
-        return t, self.x, v, total_time, dt, a
+        return t, self.x, v, total_time, dt, a, courbe_batterie
 
     
     

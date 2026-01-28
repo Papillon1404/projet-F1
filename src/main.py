@@ -16,7 +16,7 @@ car = Car()
 circuit = Circuit(DATA / "circuit.json")
 
 sim = LapSimulator(car, circuit)
-t, x, v, lap_time, time_per_segment ,a = sim.simulate()
+t, x, v, lap_time, time_per_segment ,a , courbe_batterie = sim.simulate()
 v_min = np.min(v)
 v_max = np.max(v)
 
@@ -37,22 +37,28 @@ car_Y = interp_Y(x)
 
 
 ### plot ###########################################################################################
-fig, (ax_speed, ax_acc, ax_track) = plt.subplots(
-    3, 1, figsize=(10, 8), gridspec_kw={"height_ratios": [2, 2, 3]}
+fig, (ax_speed, ax_acc,ax_batt, ax_track) = plt.subplots(
+    4, 1, figsize=(10, 8), gridspec_kw={"height_ratios": [2, 2, 2, 3]}
 )
 
 
 # vitesse
-line_v, = ax_speed.plot([], [], lw=2)
+line_v, = ax_speed.plot([], [], lw = 2)
 ax_speed.set_xlim(0, t[-1])
 ax_speed.set_ylim(0, v.max()*3.6*1.1)
 ax_speed.set_ylabel("Speed (km/h)")
 
 # accélération
-line_a, = ax_acc.plot([], [], color="red")
+line_a, = ax_acc.plot([], [], color = "red")
 ax_acc.set_xlim(0, t[-1])
 ax_acc.set_ylim(a.min()*1.2, a.max()*1.2)
 ax_acc.set_ylabel("Acceleration (m/s²)")
+
+# batterie
+line_b, = ax_batt.plot([], [], color = "green")
+ax_batt.set_xlim(0, t[-1])
+ax_batt.set_ylim(min(courbe_batterie) - 0.2 * max(courbe_batterie), max(courbe_batterie)*1.2)
+ax_batt.set_ylabel("capacité de la batterie (Wh)")
 
 # circuit
 ax_track.plot(X, Y, color="black")
@@ -65,11 +71,12 @@ ax_track.set_title("Circuit Layout")
 def update(i):
     line_v.set_data(t[:i], v[:i]*3.6)
     line_a.set_data(t[:i], a[:i])
+    line_b.set_data(t[:i], courbe_batterie[:i])
 
     car_dot.set_data([car_X[i]], [car_Y[i]])
 
 
-    return line_v, line_a, car_dot
+    return line_v, line_a, car_dot, line_b
 
 
 
@@ -80,7 +87,8 @@ ani = FuncAnimation(
     fig,
     update,
     frames=len(x),
-    interval=30,   # ms → ~50 FPS
+    interval=20,   # ms → ~50 FPS
+ 
     blit=True
 )
 
@@ -100,5 +108,5 @@ print(f"Time lost in slow zones: {np.sum(time_per_segment[v < 50]):.2f} s")
 
 ##### controle de bug #############################################################################
 
-#print(f":{t}")
-#print(f":{sim.x}")
+print(f":{a}")
+print(f":{courbe_batterie}")

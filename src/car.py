@@ -45,32 +45,47 @@ class Car :
         # passe la vitesse supérieur
         if w >= 1257 and self.vitesse < 8:    # 12_000 tr/min
             return self.vitesse + 1 
-        elif w <= 942 and vitesse > 1:   # # 9_000 tr/min
+        elif w <= 942 and self.vitesse > 1:   # # 9_000 tr/min
             return self.vitesse - 1
+        else : 
+            return self.vitesse 
             
         
 
 
     # évolution de la batterie
-    def charge_decharge_battery(self ,v, brake = bool , acc = bool, ds = 1.0):
-        
-        dt = v * ds
-        
-        if brake : # and E_battery <= self.capacity:
-            E_battery += self.P_MGU_K(v) * self.rendement_charge_decharge * dt
-        
-        elif acc and E_battery >= 0:
-            E_battery += -self.P_MGU_K(v) * self.rendement_charge_decharge * dt
+
+    def charge_battery(self, v, ds=1.0):
+        # dt = distance / vitesse
+        v = max(v, 1.0)
+        dt = ds / v
+
+        P = self.P_MGU_K(v)
+    
+        dE = + P * self.rendement_charge_decharge * dt/3600.0 # conversion en Wh
+        self.E_battery = min(self.capacity, max(0, self.E_battery + dE))
+
+    def decharge_battery(self, v, ds=1.0):
+        # dt = distance / vitesse
+        v = max(v, 1.0)
+        dt = ds / v
+
+        P = self.P_MGU_K(v)
+
+        dE = - P * self.rendement_charge_decharge * dt/3600.0 # conversion en Wh
+        self.E_battery = min(self.capacity, max(0, self.E_battery + dE))
+
 
     # puissance electrique
     def P_MGU_K(self,v):
         w = v/(self.rayon * self.rapports[self.vitesse-1]) # on divise par le rapport de la boite de vitesse
         
-        if w <= self.wpmax :
+        if w <= self.w_pmax :
             return self.power_elec
         
-        elif w >= self.wpmax :
-            return self.power_elec * self.wpmax/w   # courbe inverse de w
+        else :
+            return self.power_elec * self.w_pmax/w   # courbe inverse de w
+        
 
     # puissance thermique
     def P_ICE(self,v): 
